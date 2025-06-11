@@ -53,14 +53,13 @@
     const NUM_PARTICLES = 220;
     // --- Physics Parameters V2 ---
     const DYNAMIC_BASE_PULL_MAGNITUDE = 10.0; // Min strength of gravity when tilted.
-    const COEFFICIENT_OF_RESTITUTION = 0.4; // NEW: 0=no bounce, 1=perfect bounce. Replaces DAMPING.
-    // const DAMPING = 0.3; // OLD: Replaced by COEFFICIENT_OF_RESTITUTION
+    const COEFFICIENT_OF_RESTITUTION = 0.6; // NEW: 0=no bounce, 1=perfect bounce. Replaces DAMPING.
     const K_DRIFT_COMPENSATION = 0.05; // NEW: Strength of drift compensation if enabled (0.0 to 1.0 typically)
 
     const FIXED_TIME_STEP = 1/240; // Tuned for potentially more stability with responsive gravity
     const MAX_VEL_CELLS_PER_STEP = 3.0; // Tuned: Max particle speed in grid cells per physics step.
 
-    const ACCEL_SCALING_FACTOR = 25; // Tuned: Scales accelerometer input strength
+    const ACCEL_SCALING_FACTOR = 70; // Tuned: Scales accelerometer input strength
     const GRAVITY_SMOOTHING_FACTOR = 0.9; // Tuned: For a responsive yet smooth feel (closer to 1 = faster)
     // --- End Physics Parameters V2 ---
 
