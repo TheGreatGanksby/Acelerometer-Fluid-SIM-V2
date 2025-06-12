@@ -538,7 +538,7 @@
     }
 
     function requestMotionPermission() {
-        console.log("Attempting to request motion permission...");
+        console.log("Attempting to request motion permission..."
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
                 .then(permissionState => {
@@ -573,9 +573,9 @@
         }
     }
     function setupAccelerometer() {
-        log.console("setupAccelerometer called.");
+        console.log("setupAccelerometer called.");
         if (!window.isSecureContext && window.location.protocol !== "file:") {
-            log.console("WARNING: Page is not in a secure context (HTTPS). Accelerometer may not work reliably.");
+            console.log("WARNING: Page is not in a secure context (HTTPS). Accelerometer may not work reliably.");
             if (infoDiv) infoDiv.textContent = "Accelerometer: Needs HTTPS for reliability!";
         }
 
