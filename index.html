@@ -530,12 +530,7 @@
             let accOnly = event.acceleration;
             let ax = (typeof accOnly.x === 'number' && isFinite(accOnly.x)) ? accOnly.x : 0;
             let ay = (typeof accOnly.y === 'number' && isFinite(accOnly.y)) ? accOnly.y : 0;
-            debugString += `RawA (no grav): x=${ax.toFixed(1)}, y=${ay.toFixed(1)}<br>`;
-        } else {
-            debugString += "No event.acceleration data.<br>";
-        }
-        logDebug(debugString);
-    }
+        } 
 
     function requestMotionPermission() {
         console.log("Attempting to request motion permission...")
@@ -589,14 +584,11 @@
             button.innerText = "Enable Motion Control";
             button.onclick = requestMotionPermission;
             if (infoDiv) infoDiv.textContent = "Click 'Enable Motion Control'";
-            logDebug("Permission button is set up for iOS 13+ style.");
         } else if (window.DeviceMotionEvent) {
-             logDebug("Attempting to add devicemotion listener directly (non-iOS13+ or Android).");
             window.addEventListener('devicemotion', handleDeviceMotion, true);
             if (infoDiv) infoDiv.textContent = "Accelerometer active (attempted auto-listen).";
         } else {
             if (infoDiv) infoDiv.textContent = "DeviceMotionEvent not supported.";
-            logDebug("DeviceMotionEvent is not supported on this browser.");
         }
     }
 
