@@ -15,7 +15,6 @@
 </head>
 <body>
 <div id="info">Accelerometer: Initializing...</div>
-<div id="debugInfo">Debug Log:<br></div>
 <canvas id="ledDisplayCanvas"></canvas>
 
 <script>
@@ -24,16 +23,7 @@
     const canvas = document.getElementById('ledDisplayCanvas');
     const ctx = canvas.getContext('2d');
     const infoDiv = document.getElementById('info');
-    const debugDiv = document.getElementById('debugInfo');
-
-    function logDebug(message) {
-        console.log(message);
-        if (debugDiv) {
-            debugDiv.innerHTML += message + "<br>";
-            debugDiv.scrollTop = debugDiv.scrollHeight;
-        }
-    }
-
+   
     // --- Configuration ---
     const GRID_DIM_X = 16; const GRID_DIM_Y = 16;
     const CORNER_CUT_GEOMETRIC = 5;
@@ -52,8 +42,8 @@
     let LED_SIZE_Y = LED_SIZE_X / ASPECT_RATIO_W_H; let LED_PADDING_Y = (CELL_SIZE_Y - LED_SIZE_Y) / 2;
     if (LED_PADDING_Y < 0) { console.warn("LED size fallback"); const PADDING_RATIO = 0.15; LED_PADDING_X = CELL_SIZE_X * PADDING_RATIO; LED_PADDING_Y = CELL_SIZE_Y * PADDING_RATIO; LED_SIZE_X = CELL_SIZE_X - LED_PADDING_X * 2; LED_SIZE_Y = CELL_SIZE_Y - LED_PADDING_Y * 2; }
 
+     // --- Physics Parameters V2 ---
     const NUM_PARTICLES = 350;
-    // --- Physics Parameters V2 ---
     const DYNAMIC_BASE_PULL_MAGNITUDE = 10.0; // Min strength of gravity when tilted.
     const COEFFICIENT_OF_RESTITUTION = 0.4; // NEW: 0=no bounce, 1=perfect bounce. Replaces DAMPING.
     const K_DRIFT_COMPENSATION = 0.05; // NEW: Strength of drift compensation if enabled (0.0 to 1.0 typically)
@@ -63,7 +53,7 @@
 
     const ACCEL_SCALING_FACTOR = 70; // Tuned: Scales accelerometer input strength
     const GRAVITY_SMOOTHING_FACTOR = 0.9; // Tuned: For a responsive yet smooth feel (closer to 1 = faster)
-    // --- End Physics Parameters V2 ---
+
 
     const HG_CELL_AIR = 1; const HG_CELL_SOLID = 2;
     const FLUID_CELL = 0; const AIR_CELL = 1; const SOLID_CELL = 2;
@@ -495,18 +485,13 @@
     }
 
     function handleDeviceMotion(event) {
-        let debugString = "";
         let finalTargetSimGx = 0;
         let finalTargetSimGy = 0;
-        let accelSimGx_val = 0;
-        let accelSimGy_val = 0;
 
         if (event.accelerationIncludingGravity) {
             let acc = event.accelerationIncludingGravity;
             let rawX = (typeof acc.x === 'number' && isFinite(acc.x)) ? acc.x : 0;
             let rawY = (typeof acc.y === 'number' && isFinite(acc.y)) ? acc.y : 0;
-
-            debugString += `AIG Raw: x=${rawX.toFixed(1)}, y=${rawY.toFixed(1)}<br>`;
 
             let screenOrientation = (window.innerHeight > window.innerWidth) ? "portrait" : "landscape";
 
@@ -518,8 +503,6 @@
                 accelSimGx = rawY;
                 accelSimGy = rawX;
             }
-            accelSimGx_val = accelSimGx;
-            accelSimGy_val = accelSimGy;
 
             let desiredSimGx = accelSimGx * ACCEL_SCALING_FACTOR;
             let desiredSimGy = accelSimGy * ACCEL_SCALING_FACTOR;
@@ -535,8 +518,6 @@
                     finalTargetSimGy = desiredSimGy;
                 }
             }
-        } else {
-            debugString += "AIG is null.<br>";
         }
 
         currentSimGravityX = GRAVITY_SMOOTHING_FACTOR * finalTargetSimGx + (1 - GRAVITY_SMOOTHING_FACTOR) * currentSimGravityX;
@@ -545,9 +526,7 @@
         if (infoDiv) {
              infoDiv.textContent = `SimG: X=${currentSimGravityX.toFixed(1)}, Y=${currentSimGravityY.toFixed(1)} Orient: ${((window.innerHeight > window.innerWidth) ? "P" : "L")}`;
         }
-        debugString += `TargetSimG: x=${finalTargetSimGx.toFixed(1)}, y=${finalTargetSimGy.toFixed(1)}<br>`;
-        debugString += `AccelSim(map): x=${accelSimGx_val.toFixed(1)}, y=${accelSimGy_val.toFixed(1)}<br>`;
-
+        
         if (event.acceleration) {
             let accOnly = event.acceleration;
             let ax = (typeof accOnly.x === 'number' && isFinite(accOnly.x)) ? accOnly.x : 0;
@@ -560,11 +539,11 @@
     }
 
     function requestMotionPermission() {
-        logDebug("Attempting to request motion permission...");
+        console.log("Attempting to request motion permission...");
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
                 .then(permissionState => {
-                    logDebug("Permission request result: " + permissionState);
+                    console.log("Permission request result: " + permissionState);
                     if (permissionState === 'granted') {
                         window.addEventListener('devicemotion', handleDeviceMotion, true);
                         if (infoDiv) infoDiv.textContent = "Accelerometer active & permission granted!";
@@ -577,27 +556,27 @@
                 })
                 .catch(error => {
                     console.error("Error during DeviceMotionEvent.requestPermission():", error);
-                    logDebug("Error requesting permission: " + error.message);
+                    console.log("Error requesting permission: " + error.message);
                     if (infoDiv) infoDiv.textContent = "Error requesting motion permission.";
                 });
         } else {
-            logDebug("DeviceMotionEvent.requestPermission API not found. Trying direct listener.");
+            console.log("DeviceMotionEvent.requestPermission API not found. Trying direct listener.");
             if (window.DeviceMotionEvent) {
                 window.addEventListener('devicemotion', handleDeviceMotion, true);
                 if (infoDiv) infoDiv.textContent = "Accelerometer listening (auto).";
-                 logDebug("devicemotion listener added (auto).");
+                 console.log("devicemotion listener added (auto).");
             } else {
                  if (infoDiv) infoDiv.textContent = "DeviceMotionEvent not supported by browser.";
-                 logDebug("DeviceMotionEvent not supported by browser.");
+                 console.log("DeviceMotionEvent not supported by browser.");
             }
             const button = document.getElementById('permissionButton');
             if (button) button.remove();
         }
     }
     function setupAccelerometer() {
-        logDebug("setupAccelerometer called.");
+        log.console("setupAccelerometer called.");
         if (!window.isSecureContext && window.location.protocol !== "file:") {
-            logDebug("WARNING: Page is not in a secure context (HTTPS). Accelerometer may not work reliably.");
+            log.console("WARNING: Page is not in a secure context (HTTPS). Accelerometer may not work reliably.");
             if (infoDiv) infoDiv.textContent = "Accelerometer: Needs HTTPS for reliability!";
         }
 
