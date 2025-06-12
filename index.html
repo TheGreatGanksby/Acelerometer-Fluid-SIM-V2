@@ -538,7 +538,7 @@
     }
 
     function requestMotionPermission() {
-        console.log("Attempting to request motion permission..."
+        console.log("Attempting to request motion permission...")
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
                 .then(permissionState => {
