@@ -40,7 +40,7 @@
     if (LED_PADDING_Y < 0) { console.warn("LED size fallback"); const PADDING_RATIO = 0.15; LED_PADDING_X = CELL_SIZE_X * PADDING_RATIO; LED_PADDING_Y = CELL_SIZE_Y * PADDING_RATIO; LED_SIZE_X = CELL_SIZE_X - LED_PADDING_X * 2; LED_SIZE_Y = CELL_SIZE_Y - LED_PADDING_Y * 2; }
 
      // --- Physics Parameters V2 ---
-    const NUM_PARTICLES = 400;
+    const NUM_PARTICLES = 407;
     const DYNAMIC_BASE_PULL_MAGNITUDE = 10.0;
     const COEFFICIENT_OF_RESTITUTION = 0.4;
     const K_DRIFT_COMPENSATION = 0.05;
@@ -75,7 +75,7 @@
         flipRatio: 0.4,
         numPressureIters: 150,
         numParticleIters: 3,
-        overRelaxation: 1.2,
+        overRelaxation: 1.05,
         compensateDrift: true,
         separateParticles: true,
     };
