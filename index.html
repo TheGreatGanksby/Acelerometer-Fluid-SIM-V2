@@ -8,7 +8,6 @@
     body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #282c34; margin: 0; overflow: hidden; overscroll-behavior-y: contain;}
     canvas { display: block; box-shadow: 0 0 15px rgba(0,0,0,0.5); touch-action: none; }
     #permissionButton { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; z-index: 100;}
-    /* #debugInfo CSS removed as element is gone */
     #info { position: absolute; left: 5px; color: lightgray; font-family: monospace; z-index: 100; background-color: rgba(0,0,0,0.6); padding: 5px; border-radius: 3px; top: 5px; font-size: 12px;}
 </style>
 </head>
@@ -74,7 +73,7 @@
     const FLIP_PARTICLE_RADIUS_FACTOR = 0.3;
     const simParams = {
         flipRatio: 0.4,
-        numPressureIters: 120,
+        numPressureIters: 150,
         numParticleIters: 3,
         overRelaxation: 1.2,
         compensateDrift: true,
@@ -513,8 +512,8 @@
         if (infoDiv) {
              infoDiv.textContent = `SimG: X=${currentSimGravityX.toFixed(1)}, Y=${currentSimGravityY.toFixed(1)} Orient: ${((window.innerHeight > window.innerWidth) ? "P" : "L")}`;
         }
-        // Removed all debugString and logDebug related lines from here
-    } // <<< THIS IS THE CORRECTED CLOSING BRACE for handleDeviceMotion
+      
+    } 
 
     function requestMotionPermission() {
         // console.log("Attempting to request motion permission..."); // REMOVED
