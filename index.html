@@ -8,8 +8,8 @@
     body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #282c34; margin: 0; overflow: hidden; overscroll-behavior-y: contain;}
     canvas { display: block; box-shadow: 0 0 15px rgba(0,0,0,0.5); touch-action: none; }
     #permissionButton { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; z-index: 100;}
-    #info, #debugInfo { position: absolute; left: 5px; color: lightgray; font-family: monospace; z-index: 100; background-color: rgba(0,0,0,0.6); padding: 5px; border-radius: 3px;}
-    #info { top: 5px; font-size: 12px;}
+    /* #debugInfo CSS removed as element is gone */
+    #info { position: absolute; left: 5px; color: lightgray; font-family: monospace; z-index: 100; background-color: rgba(0,0,0,0.6); padding: 5px; border-radius: 3px; top: 5px; font-size: 12px;}
 </style>
 </head>
 <body>
@@ -17,12 +17,10 @@
 <canvas id="ledDisplayCanvas"></canvas>
 
 <script>
-
-    
     const canvas = document.getElementById('ledDisplayCanvas');
     const ctx = canvas.getContext('2d');
     const infoDiv = document.getElementById('info');
-   
+
     // --- Configuration ---
     const GRID_DIM_X = 16; const GRID_DIM_Y = 16;
     const CORNER_CUT_GEOMETRIC = 5;
@@ -43,15 +41,15 @@
 
      // --- Physics Parameters V2 ---
     const NUM_PARTICLES = 350;
-    const DYNAMIC_BASE_PULL_MAGNITUDE = 10.0; // Min strength of gravity when tilted.
-    const COEFFICIENT_OF_RESTITUTION = 0.4; // NEW: 0=no bounce, 1=perfect bounce. Replaces DAMPING.
-    const K_DRIFT_COMPENSATION = 0.05; // NEW: Strength of drift compensation if enabled (0.0 to 1.0 typically)
+    const DYNAMIC_BASE_PULL_MAGNITUDE = 10.0;
+    const COEFFICIENT_OF_RESTITUTION = 0.4;
+    const K_DRIFT_COMPENSATION = 0.05;
 
-    const FIXED_TIME_STEP = 1/60; // Tuned for potentially more stability with responsive gravity
-    const MAX_VEL_CELLS_PER_STEP = 3.0; // Tuned: Max particle speed in grid cells per physics step.
+    const FIXED_TIME_STEP = 1/60;
+    const MAX_VEL_CELLS_PER_STEP = 3.0;
 
-    const ACCEL_SCALING_FACTOR = 70; // Tuned: Scales accelerometer input strength
-    const GRAVITY_SMOOTHING_FACTOR = 0.9; // Tuned: For a responsive yet smooth feel (closer to 1 = faster)
+    const ACCEL_SCALING_FACTOR = 70;
+    const GRAVITY_SMOOTHING_FACTOR = 0.9;
 
 
     const HG_CELL_AIR = 1; const HG_CELL_SOLID = 2;
@@ -74,11 +72,11 @@
     const FLIP_FLUID_DENSITY = 1.0;
     const FLIP_PARTICLE_RADIUS_FACTOR = 0.3;
     const simParams = {
-        flipRatio: 0.4, // Slightly increased for a bit more fluid energy
-        numPressureIters: 120, // Slightly reduced as a balance
-        numParticleIters: 3,   // Slightly reduced
-        overRelaxation: 1.2,   // Can sometimes help convergence with fewer iterations
-        compensateDrift: true, // User's value (but logic is now improved if set to true)
+        flipRatio: 0.4,
+        numPressureIters: 120,
+        numParticleIters: 3,
+        overRelaxation: 1.2,
+        compensateDrift: true,
         separateParticles: true,
     };
 
@@ -135,9 +133,8 @@
         }
 
         capParticleVelocities(sdt) {
-            // MAX_VEL_CELLS_PER_STEP is the max number of grid cells a particle can cross in one sdt
             const maxVelocityComponent = MAX_VEL_CELLS_PER_STEP * this.h / sdt;
-            const maxVelSq = maxVelocityComponent * maxVelocityComponent; // Compare squared magnitudes
+            const maxVelSq = maxVelocityComponent * maxVelocityComponent;
 
             for (let i = 0; i < this.numParticles; i++) {
                 const vx = this.particleVel[2 * i];
@@ -146,7 +143,7 @@
 
                 if (velSq > maxVelSq) {
                     const speed = Math.sqrt(velSq);
-                    if (speed < 1e-9) continue; // Avoid division by zero for stationary particles
+                    if (speed < 1e-9) continue;
                     const factor = maxVelocityComponent / speed;
                     this.particleVel[2 * i] *= factor;
                     this.particleVel[2 * i + 1] *= factor;
@@ -217,9 +214,9 @@
             }
         }
 
-        handleParticleCollisions() { // Using COEFFICIENT_OF_RESTITUTION
+        handleParticleCollisions() {
             var r = this.particleRadius;
-            var minX = r + 1e-6; // Small offset to prevent sticking
+            var minX = r + 1e-6;
             var maxX = this.fNumX * this.h - r - 1e-6;
             var minY = r + 1e-6;
             var maxY = this.fNumY * this.h - r - 1e-6;
@@ -344,11 +341,10 @@
                                     this.s[gx * nY + (gy - 1)] + this.s[gx * nY + gy];
                         if (s_sum < 1e-9) continue;
 
-                        // V2: Refined drift compensation (active if compensateDriftVal is true)
                         if (this.particleRestDensity > 0.0 && compensateDriftVal) {
                             var compression = this.particleDensity[centerIdx] - this.particleRestDensity;
-                            if (compression > 0.0) { // Only correct for over-compression to prevent instability
-                                div -= K_DRIFT_COMPENSATION * compression; // No /sdt
+                            if (compression > 0.0) {
+                                div -= K_DRIFT_COMPENSATION * compression;
                             }
                         }
                         var p_change_scaled = -div / s_sum * overRelaxation;
@@ -363,19 +359,19 @@
         }
 
         simulate(dt, gravityX_acc, gravityY_acc, flipRatio, numPressureIters, numParticleIters, overRelaxation, compensateDrift, separateParticles) {
-            var numSubSteps = 1; var sdt = dt / numSubSteps; // Could increase numSubSteps if FIXED_TIME_STEP is larger
+            var numSubSteps = 1; var sdt = dt / numSubSteps;
             for (var step = 0; step < numSubSteps; step++) {
                 this.integrateParticles(sdt, gravityX_acc, gravityY_acc);
                 this.capParticleVelocities(sdt);
                 if (separateParticles) { this.pushParticlesApart(numParticleIters); }
-                this.handleParticleCollisions(); // Uses COEFFICIENT_OF_RESTITUTION
-                enforceParticleOctagonCollisionFF(this, simOctagonVertices, octagonNormals); // Uses COEFFICIENT_OF_RESTITUTION
-                this.capParticleVelocities(sdt); // Cap again after collisions
+                this.handleParticleCollisions();
+                enforceParticleOctagonCollisionFF(this, simOctagonVertices, octagonNormals);
+                this.capParticleVelocities(sdt);
                 this.transferVelocities(true, flipRatio);
                 this.updateParticleDensity();
                 this.solveIncompressibility(numPressureIters, sdt, overRelaxation, compensateDrift);
                 this.transferVelocities(false, flipRatio);
-                this.capParticleVelocities(sdt); // Final cap
+                this.capParticleVelocities(sdt);
             }
         }
     } // End of FlipFluid Class
@@ -384,35 +380,26 @@
     function isInsideSimOctagon(sim_px,sim_py){ for(let i=0;i<8;i++){const v1=simOctagonVertices[i],n=octagonNormals[i];if((sim_px-v1.x)*n.x+(sim_py-v1.y)*n.y<-1e-5)return false;}return true;}
     function initializeHexGridCellTypes(){ const s_cut=CORNER_CUT_FOR_LEDS;for(let gx=0;gx<cellCols;gx++){for(let gy=0;gy<cellRows;gy++){const idx=gx*cellRows+gy;let iS=false;if(gx+gy<s_cut)iS=true;if((gridResX-1-gx)+gy<s_cut)iS=true;if(gx+(gridResY-1-gy)<s_cut)iS=true;if((gridResX-1-gx)+(gridResY-1-gy)<s_cut)iS=true;if(iS){hexGridCellType[idx]=HG_CELL_SOLID;}else{hexGridCellType[idx]=HG_CELL_AIR;}}}}
 
-    // V2: enforceParticleOctagonCollisionFF now uses COEFFICIENT_OF_RESTITUTION
     function enforceParticleOctagonCollisionFF(fl,sOV,oN){
-        const rst = COEFFICIENT_OF_RESTITUTION; // Using the new constant
-        const rTh = fl.particleRadius * 0.5; // Collision threshold (half radius)
+        const rst = COEFFICIENT_OF_RESTITUTION;
+        const rTh = fl.particleRadius * 0.5;
 
         for(let pI=0; pI < fl.numParticles; pI++){
             let px = fl.particlePos[2*pI], py = fl.particlePos[2*pI+1];
             let pvx = fl.particleVel[2*pI], pvy = fl.particleVel[2*pI+1];
 
-            for(let i=0; i<8; i++){ // Iterate over octagon segments
-                const v1 = sOV[i]; // Start vertex of the segment (in sim coordinates)
-                const n = oN[i];   // Normal of the segment
-
-                // Distance from particle to the plane defined by (v1, n)
-                // Negative distance means particle is "outside" or behind the plane
-                // Positive distance means particle is "inside" or in front of the plane
-                // For our normals (pointing inwards), negative dist means penetration
+            for(let i=0; i<8; i++){
+                const v1 = sOV[i];
+                const n = oN[i];
                 const dist = (px - v1.x) * n.x + (py - v1.y) * n.y;
 
-                if(dist < rTh){ // Particle has penetrated or is very close
-                    // Penetration depth correction
-                    const penetration = rTh - dist + 1e-5; // Add small epsilon to ensure it's pushed out
+                if(dist < rTh){
+                    const penetration = rTh - dist + 1e-5;
                     px += penetration * n.x;
                     py += penetration * n.y;
 
-                    // Collision response: Reflect velocity
-                    const vn_dot = pvx * n.x + pvy * n.y; // Velocity component along the normal
-                    if(vn_dot < 0){ // Particle is moving towards the boundary segment
-                        // Standard collision response formula for velocity reflection
+                    const vn_dot = pvx * n.x + pvy * n.y;
+                    if(vn_dot < 0){
                         pvx -= (1 + rst) * vn_dot * n.x;
                         pvy -= (1 + rst) * vn_dot * n.y;
                     }
@@ -525,19 +512,15 @@
         if (infoDiv) {
              infoDiv.textContent = `SimG: X=${currentSimGravityX.toFixed(1)}, Y=${currentSimGravityY.toFixed(1)} Orient: ${((window.innerHeight > window.innerWidth) ? "P" : "L")}`;
         }
-        
-        if (event.acceleration) {
-            let accOnly = event.acceleration;
-            let ax = (typeof accOnly.x === 'number' && isFinite(accOnly.x)) ? accOnly.x : 0;
-            let ay = (typeof accOnly.y === 'number' && isFinite(accOnly.y)) ? accOnly.y : 0;
-        } 
+        // Removed all debugString and logDebug related lines from here
+    } // <<< THIS IS THE CORRECTED CLOSING BRACE for handleDeviceMotion
 
     function requestMotionPermission() {
-        console.log("Attempting to request motion permission...")
+        // console.log("Attempting to request motion permission..."); // REMOVED
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
                 .then(permissionState => {
-                    console.log("Permission request result: " + permissionState);
+                    // console.log("Permission request result: " + permissionState); // REMOVED
                     if (permissionState === 'granted') {
                         window.addEventListener('devicemotion', handleDeviceMotion, true);
                         if (infoDiv) infoDiv.textContent = "Accelerometer active & permission granted!";
@@ -549,28 +532,28 @@
                     }
                 })
                 .catch(error => {
-                    console.error("Error during DeviceMotionEvent.requestPermission():", error);
-                    console.log("Error requesting permission: " + error.message);
+                    console.error("Error during DeviceMotionEvent.requestPermission():", error); // Keep console.error
+                    // console.log("Error requesting permission: " + error.message); // REMOVED
                     if (infoDiv) infoDiv.textContent = "Error requesting motion permission.";
                 });
         } else {
-            console.log("DeviceMotionEvent.requestPermission API not found. Trying direct listener.");
+            // console.log("DeviceMotionEvent.requestPermission API not found. Trying direct listener."); // REMOVED
             if (window.DeviceMotionEvent) {
                 window.addEventListener('devicemotion', handleDeviceMotion, true);
                 if (infoDiv) infoDiv.textContent = "Accelerometer listening (auto).";
-                 console.log("devicemotion listener added (auto).");
+                 // console.log("devicemotion listener added (auto)."); // REMOVED
             } else {
                  if (infoDiv) infoDiv.textContent = "DeviceMotionEvent not supported by browser.";
-                 console.log("DeviceMotionEvent not supported by browser.");
+                 // console.log("DeviceMotionEvent not supported by browser."); // REMOVED
             }
             const button = document.getElementById('permissionButton');
             if (button) button.remove();
         }
     }
     function setupAccelerometer() {
-        console.log("setupAccelerometer called.");
+        // console.log("setupAccelerometer called."); // REMOVED
         if (!window.isSecureContext && window.location.protocol !== "file:") {
-            console.log("WARNING: Page is not in a secure context (HTTPS). Accelerometer may not work reliably.");
+            // console.log("WARNING: Page is not in a secure context (HTTPS). Accelerometer may not work reliably."); // REMOVED
             if (infoDiv) infoDiv.textContent = "Accelerometer: Needs HTTPS for reliability!";
         }
 
@@ -584,11 +567,14 @@
             button.innerText = "Enable Motion Control";
             button.onclick = requestMotionPermission;
             if (infoDiv) infoDiv.textContent = "Click 'Enable Motion Control'";
+            // console.log("Permission button is set up for iOS 13+ style."); // REMOVED
         } else if (window.DeviceMotionEvent) {
+            // console.log("Attempting to add devicemotion listener directly (non-iOS13+ or Android)."); // REMOVED
             window.addEventListener('devicemotion', handleDeviceMotion, true);
             if (infoDiv) infoDiv.textContent = "Accelerometer active (attempted auto-listen).";
         } else {
             if (infoDiv) infoDiv.textContent = "DeviceMotionEvent not supported.";
+            // console.log("DeviceMotionEvent is not supported on this browser."); // REMOVED
         }
     }
 
