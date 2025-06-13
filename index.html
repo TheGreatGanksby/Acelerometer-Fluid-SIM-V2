@@ -639,10 +639,10 @@
         ctx.shadowBlur = 0;
 
         ctx.strokeStyle = COLOR_BORDER;
-        const bLW = MARGIN * 0.15;
+        const bLW = MARGIN * 0.08;
         ctx.lineWidth = bLW;
         ctx.beginPath();
-        const cX = CANVAS_SIZE / 2, cY = CANVAS_SIZE / 2, bP = 65, rad = (CANVAS_SIZE / 2) - bP - (bLW / 2);
+        const cX = CANVAS_SIZE / 2, cY = CANVAS_SIZE / 2, bP = 58, rad = (CANVAS_SIZE / 2) - bP - (bLW / 2);
         ctx.arc(cX, cY, rad, 0, Math.PI * 2);
         ctx.stroke();
     }
