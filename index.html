@@ -596,7 +596,14 @@
             simParams.separateParticles
         );
         for(let r=0; r<gridResY; ++r) { if (gridState[r]) gridState[r].fill(false); }
-        for (let i = 0; i < flipFluid.numParticles; i++) { const pxSim = flipFluid.particlePos[2 * i]; const pySim = flipFluid.particlePos[2 * i + 1]; const gx = clamp(Math.floor(pxSim * INV_CELL_SIZE_X), 0, gridResX - 1); const gy = clamp(Math.floor(pySim * INV_CELL_SIZE_Y), 0, gridResY - 1); if (gridToLedIndexMap[gy] && gridToLedIndexMap[gy][gx] !== -1) { const ffCellIdx = gx * flipFluid.fNumY + gy; if ( ffCellIdx >=0 && ffCellIdx < flipFluid.fNumCells && (flipFluid.cellType[ffCellIdx] === FLUID_CELL || (flipFluid.s[ffCellIdx] !== 0.0 && flipFluid.particleDensity[ffCellIdx] > 0.05)) ) { if (gridState[gy]) { gridState[gy][gx] = true; } } } }
+        for (let i = 0; i < flipFluid.numParticles; i++) {
+            const pxSim = flipFluid.particlePos[2 * i]; 
+            const pySim = flipFluid.particlePos[2 * i + 1]; 
+            const gx = clamp(Math.floor(pxSim * INV_CELL_SIZE_X), 0, gridResX - 1); 
+            const gy = clamp(Math.floor(pySim * INV_CELL_SIZE_Y), 0, gridResY - 1); 
+                 if (gridToLedIndexMap[gy] && gridToLedIndexMap[gy][gx] !== -1) { const ffCellIdx = gx * flipFluid.fNumY + gy; 
+                   if ( ffCellIdx >=0 && ffCellIdx < flipFluid.fNumCells && (flipFluid.cellType[ffCellIdx] === FLUID_CELL || (flipFluid.s[ffCellIdx] !== 0.0 && flipFluid.particleDensity[ffCellIdx] > 0.05)) ) { 
+                       if (gridState[gy]) { gridState[gy][gx] = true; } } } }
     }
 
     function render() {
