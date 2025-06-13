@@ -380,10 +380,136 @@
         }
     } // End of FlipFluid Class
 
-    function setupOctagonGeometry(){ octagonVertices=[];octagonNormals=[];const C=CORNER_CUT_GEOMETRIC*CELL_SIZE_X,GA=GRID_AREA_SIZE;octagonVertices.push({x:MARGIN+C,y:MARGIN});octagonVertices.push({x:MARGIN+GA-C,y:MARGIN});octagonVertices.push({x:MARGIN+GA,y:MARGIN+C});octagonVertices.push({x:MARGIN+GA,y:MARGIN+GA-C});octagonVertices.push({x:MARGIN+GA-C,y:MARGIN+GA});octagonVertices.push({x:MARGIN+C,y:MARGIN+GA});octagonVertices.push({x:MARGIN,y:MARGIN+GA-C});octagonVertices.push({x:MARGIN,y:MARGIN+C});for(let i=0;i<8;i++){const p1=octagonVertices[i],p2=octagonVertices[(i+1)%8];const dx=p2.x-p1.x,dy=p2.y-p1.y;let nx=-dy,ny=dx;const l=Math.sqrt(nx*nx+ny*ny);if(l>1e-9){nx/=l;ny/=l;}const cX=MARGIN+GA/2,cY=MARGIN+GA/2;const mX=(p1.x+p2.x)/2,mY=(p1.y+p2.y)/2;const vX=cX-mX,vY=cY-mY;if(nx*vX+ny*vY<0){nx*=-1;ny*=-1;}octagonNormals.push({x:nx,y:ny});}}
-    function isInsideSimOctagon(sim_px,sim_py){ for(let i=0;i<8;i++){const v1=simOctagonVertices[i],n=octagonNormals[i];if((sim_px-v1.x)*n.x+(sim_py-v1.y)*n.y<-1e-5)return false;}return true;}
-    function initializeHexGridCellTypes(){ const s_cut=CORNER_CUT_FOR_LEDS;for(let gx=0;gx<cellCols;gx++){for(let gy=0;gy<cellRows;gy++){const idx=gx*cellRows+gy;let iS=false;if(gx+gy<s_cut)iS=true;if((gridResX-1-gx)+gy<s_cut)iS=true;if(gx+(gridResY-1-gy)<s_cut)iS=true;if((gridResX-1-gx)+(gridResY-1-gy)<s_cut)iS=true;if(iS){hexGridCellType[idx]=HG_CELL_SOLID;}else{hexGridCellType[idx]=HG_CELL_AIR;}}}}
+    function setupOctagonGeometry() {
+    // Clear any previous geometry
+    octagonVertices = [];
+    octagonNormals = [];
 
+    // Define some constants for easier reading
+    const cornerCut = CORNER_CUT_GEOMETRIC * CELL_SIZE_X;
+    const gridAreaSize = GRID_AREA_SIZE;
+
+    // Define the 8 vertices of the octagon, starting from the top-left edge
+    octagonVertices.push({ x: MARGIN + cornerCut, y: MARGIN });              // Top edge, left point
+    octagonVertices.push({ x: MARGIN + gridAreaSize - cornerCut, y: MARGIN }); // Top edge, right point
+    octagonVertices.push({ x: MARGIN + gridAreaSize, y: MARGIN + cornerCut }); // Right edge, top point
+    octagonVertices.push({ x: MARGIN + gridAreaSize, y: MARGIN + gridAreaSize - cornerCut }); // Right edge, bottom point
+    octagonVertices.push({ x: MARGIN + gridAreaSize - cornerCut, y: MARGIN + gridAreaSize }); // Bottom edge, right point
+    octagonVertices.push({ x: MARGIN + cornerCut, y: MARGIN + gridAreaSize }); // Bottom edge, left point
+    octagonVertices.push({ x: MARGIN, y: MARGIN + gridAreaSize - cornerCut }); // Left edge, bottom point
+    octagonVertices.push({ x: MARGIN, y: MARGIN + cornerCut });              // Left edge, top point
+
+    // Calculate the normal vector for each of the 8 segments
+    for (let i = 0; i < 8; i++) {
+        const p1 = octagonVertices[i];
+        const p2 = octagonVertices[(i + 1) % 8]; // The next vertex, wrapping around for the last segment
+
+        // Calculate the vector of the edge
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+
+        // Calculate the perpendicular vector (the normal).
+        // A 90-degree rotation of (dx, dy) is (-dy, dx).
+        let normalX = -dy;
+        let normalY = dx;
+
+        // Normalize the vector (make its length 1)
+        const length = Math.sqrt(normalX * normalX + normalY * normalY);
+        if (length > 1e-9) { // Avoid division by zero
+            normalX /= length;
+            normalY /= length;
+        }
+
+        // --- Ensure normals point outwards from the center of the octagon ---
+        // Find the center of the octagon
+        const centerX = MARGIN + gridAreaSize / 2;
+        const centerY = MARGIN + gridAreaSize / 2;
+
+        // Find the midpoint of the current edge
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+
+        // Create a vector from the octagon center to the edge's midpoint
+        const vectorToMidpointX = midX - centerX;
+        const vectorToMidpointY = midY - centerY;
+
+        // Use the dot product to check if the normal points in the same general direction as the vector to the midpoint.
+        // If the dot product is negative, the normal is pointing inwards, so we flip it.
+        const dotProduct = (normalX * vectorToMidpointX) + (normalY * vectorToMidpointY);
+        if (dotProduct < 0) {
+            normalX *= -1;
+            normalY *= -1;
+        }
+
+        // NOTE: The original code logic was slightly different but achieved the same goal.
+        // It calculated a vector from the midpoint TO the center and checked if the dot product
+        // was negative. This version is slightly more intuitive (vector from center outwards).
+        // The original logic is `vX = cX - mX`, `vY = cY - mY`. If `nx*vX + ny*vY < 0`...
+        // This is equivalent to `if ( -nx*(mX - cX) - ny*(mY - cY) < 0 )`, which means
+        // `if ( nx*(mX - cX) + ny*(mY - cY) > 0 )`. My logic checks if it's positive.
+        // Let's stick to the original logic to be 100% compatible.
+        const vec_mX_to_cX = centerX - midX;
+        const vec_mY_to_cY = centerY - midY;
+        if (normalX * vec_mX_to_cX + normalY * vec_mY_to_cY < 0) {
+             normalX *= -1;
+             normalY *= -1;
+        }
+
+
+        octagonNormals.push({ x: normalX, y: normalY });
+    }
+}
+function isInsideSimOctagon(sim_px, sim_py) {
+    for (let i = 0; i < 8; i++) {
+        const vertex = simOctagonVertices[i];
+        const normal = octagonNormals[i];
+
+        // Calculate the dot product of (vector from edge vertex to point) and (edge normal).
+        // If the point is on the "wrong" side of any of the 8 planes, it's outside.
+        // For inward-pointing normals, a positive dot product means outside.
+        // For outward-pointing normals, a negative dot product means outside.
+        // Your normals point outwards, so this check is correct.
+        if ((sim_px - vertex.x) * normal.x + (sim_py - vertex.y) * normal.y < -1e-5) {
+            return false;
+        }
+    }
+    // If the point is on the "correct" side of all 8 planes, it's inside.
+    return true;
+}
+   function initializeHexGridCellTypes() {
+    const s_cut = CORNER_CUT_FOR_LEDS;
+
+    for (let gx = 0; gx < cellCols; gx++) {
+        for (let gy = 0; gy < cellRows; gy++) {
+            const idx = gx * cellRows + gy;
+            let isSolid = false;
+
+            // Check the four corners using manhattan distance from corner
+            // Top-left corner
+            if (gx + gy < s_cut) {
+                isSolid = true;
+            }
+            // Top-right corner
+            if ((gridResX - 1 - gx) + gy < s_cut) {
+                isSolid = true;
+            }
+            // Bottom-left corner
+            if (gx + (gridResY - 1 - gy) < s_cut) {
+                isSolid = true;
+            }
+            // Bottom-right corner
+            if ((gridResX - 1 - gx) + (gridResY - 1 - gy) < s_cut) {
+                isSolid = true;
+            }
+
+            if (isSolid) {
+                hexGridCellType[idx] = HG_CELL_SOLID;
+            } else {
+                hexGridCellType[idx] = HG_CELL_AIR;
+            }
+        }
+    }
+}
     function enforceParticleOctagonCollisionFF(fl,sOV,oN){
         const rst = COEFFICIENT_OF_RESTITUTION;
         const rTh = fl.particleRadius * 0.5;
@@ -520,11 +646,9 @@
     } 
 
     function requestMotionPermission() {
-        // console.log("Attempting to request motion permission..."); // REMOVED
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
                 .then(permissionState => {
-                    // console.log("Permission request result: " + permissionState); // REMOVED
                     if (permissionState === 'granted') {
                         window.addEventListener('devicemotion', handleDeviceMotion, true);
                         if (infoDiv) infoDiv.textContent = "Accelerometer active & permission granted!";
@@ -536,8 +660,7 @@
                     }
                 })
                 .catch(error => {
-                    console.error("Error during DeviceMotionEvent.requestPermission():", error); // Keep console.error
-                    // console.log("Error requesting permission: " + error.message); // REMOVED
+                    console.error("Error during DeviceMotionEvent.requestPermission():", error);
                     if (infoDiv) infoDiv.textContent = "Error requesting motion permission.";
                 });
         } else {
@@ -624,12 +747,12 @@ function render() {
         ctx.fillStyle = COLOR_LED_ON;
         for (let y = 0; y < gridResY; y++) {
             for (let x = 0; x < gridResX; x++) {
-                if (gridState[y] && gridState[y][x]) { // If LED is ON
+                if (gridState[y] && gridState[y][x]) {
                     const lI = gridToLedIndexMap[y][x];
                     if (lI !== -1) {
                         const p = ledPositionLUT[lI];
                         if (p) {
-                            // Set the glow size (you can tune this multiplier)
+                            // Set the glow size (tune multiplier)
                             ctx.shadowBlur = Math.min(LED_SIZE_X, LED_SIZE_Y) * 1.5;
                             ctx.fillRect(p.x, p.y, LED_SIZE_X, LED_SIZE_Y);
                         }
