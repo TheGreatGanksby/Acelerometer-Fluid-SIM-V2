@@ -59,7 +59,7 @@
 
     const HG_CELL_AIR = 1; const HG_CELL_SOLID = 2;
     const FLUID_CELL = 0; const AIR_CELL = 1; const SOLID_CELL = 2;
-    const COLOR_LED_ON = '#00FF00'; const COLOR_LED_OFF = '#333333'; const COLOR_LED_GLOW = 'rgba(0, 255, 0, 0.3)'; const COLOR_BORDER = '#B8860B'; const COLOR_RING = '#FFD700'; const COLOR_BACKGROUND = '#282c34';
+    const COLOR_LED_ON = '#00FF00'; const COLOR_LED_OFF = '#333333'; const COLOR_LED_GLOW = 'rgba(0, 255, 0, 0.4)'; const COLOR_BORDER = '#B8860B'; const COLOR_RING = '#FFD700'; const COLOR_BACKGROUND = '#282c34';
 
     canvas.width = CANVAS_SIZE; canvas.height = CANVAS_SIZE;
 
@@ -598,37 +598,46 @@
                        if (gridState[gy]) { gridState[gy][gx] = true; } } } }
     }
 
-    function render() {
+function render() {
         ctx.fillStyle = COLOR_BACKGROUND;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        ctx.shadowColor = COLOR_LED_GLOW;
+        // PASS 1: Draw all OFF LEDs first. This creates a clean base layer.
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = COLOR_LED_OFF;
         for (let y = 0; y < gridResY; y++) {
             for (let x = 0; x < gridResX; x++) {
-                if (!gridToLedIndexMap || !gridToLedIndexMap[y]) { continue; }
-                const lI = gridToLedIndexMap[y][x];
-                if (lI !== -1) {
-                    const p = ledPositionLUT[lI];
-                    if (!p) { continue; }
-                    const lX = p.x, lY = p.y;
-                    if (!gridState || !gridState[y]) {
-                        ctx.fillStyle = COLOR_LED_OFF;
-                        ctx.fillRect(lX, lY, LED_SIZE_X, LED_SIZE_Y);
-                        continue;
-                    }
-                    if (gridState[y][x]) {
-                        ctx.fillStyle = COLOR_LED_ON;
-                        ctx.shadowBlur = Math.min(LED_SIZE_X, LED_SIZE_Y) * 0.8;
-                        ctx.fillRect(lX, lY, LED_SIZE_X, LED_SIZE_Y);
-                        ctx.shadowBlur = 0;
-                    } else {
-                        ctx.fillStyle = COLOR_LED_OFF;
-                        ctx.fillRect(lX, lY, LED_SIZE_X, LED_SIZE_Y);
+                if (!gridState[y] || !gridState[y][x]) { // If LED is OFF
+                    const lI = gridToLedIndexMap[y][x];
+                    if (lI !== -1) {
+                        const p = ledPositionLUT[lI];
+                        if (p) {
+                            ctx.fillRect(p.x, p.y, LED_SIZE_X, LED_SIZE_Y);
+                        }
                     }
                 }
             }
         }
-        ctx.shadowBlur = 0.5;
+
+        // PASS 2: Draw all ON LEDs with their glows on top of the base layer.
+        ctx.shadowColor = COLOR_LED_GLOW;
+        ctx.fillStyle = COLOR_LED_ON;
+        for (let y = 0; y < gridResY; y++) {
+            for (let x = 0; x < gridResX; x++) {
+                if (gridState[y] && gridState[y][x]) { // If LED is ON
+                    const lI = gridToLedIndexMap[y][x];
+                    if (lI !== -1) {
+                        const p = ledPositionLUT[lI];
+                        if (p) {
+                            // Set the glow size (you can tune this multiplier)
+                            ctx.shadowBlur = Math.min(LED_SIZE_X, LED_SIZE_Y) * 1.5;
+                            ctx.fillRect(p.x, p.y, LED_SIZE_X, LED_SIZE_Y);
+                        }
+                    }
+                }
+            }
+        }
+        ctx.shadowBlur = 0;
 
         ctx.strokeStyle = COLOR_BORDER;
         const bLW = MARGIN * 0.08;
